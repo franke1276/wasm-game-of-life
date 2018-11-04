@@ -6,19 +6,38 @@ const GRID_COLOR = "#CCCCCC";
 const DEAD_COLOR = "#FFFFFF";
 const ALIVE_COLOR = "#000000";
 
-const pre = document.getElementById("game-of-life-canvas");
 const universe = Universe.create();
 const width = universe.width();
 const height = universe.height();
 
+const startStopButton = document.getElementById("startstop");
+startStopButton.addEventListener('click', () => {
+  universe.toggle_start_stop();
+}, false);
+
+const resetButton = document.getElementById("reset");
+resetButton.addEventListener('click', () => {
+  universe.reset();
+}, false);
+const patternButton = document.getElementById("generatePattern");
+patternButton.addEventListener('click', () => {
+  universe.generate_pattern();
+}, false);
+
 const canvas = document.getElementById("game-of-life-canvas");
 canvas.height = (CELL_SIZE + 1) * height + 1;
 canvas.width = (CELL_SIZE + 1) * width + 1;
+canvas.addEventListener('click', (e) => {
+  universe.stop();
+  let column = Math.floor(e.offsetX / (CELL_SIZE + 1));
+  let row = Math.floor(e.offsetY / (CELL_SIZE + 1));
+  universe.toggle_cell(row, column);
+}, false);
 
 const ctx = canvas.getContext('2d');
 
 const renderLoop = () => {
-  universe.tick2();
+  universe.tick();
 
   drawGrid();
   drawCells();

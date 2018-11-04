@@ -1,6 +1,10 @@
 /* tslint:disable */
 import * as wasm from './wasm_game_of_life_bg';
 
+/**
+*/
+export const Cell = Object.freeze({ Dead:0,Alive:1, });
+
 let cachedTextDecoder = new TextDecoder('utf-8');
 
 let cachegetUint8Memory = null;
@@ -14,14 +18,6 @@ function getUint8Memory() {
 function getStringFromWasm(ptr, len) {
     return cachedTextDecoder.decode(getUint8Memory().subarray(ptr, ptr + len));
 }
-
-export function __wbg_alert_d3b6e8db27c82dfa(arg0, arg1) {
-    let varg0 = getStringFromWasm(arg0, arg1);
-    alert(varg0);
-}
-/**
-*/
-export const Cell = Object.freeze({ Dead:0,Alive:1, });
 
 let cachedGlobalArgumentPtr = null;
 function globalArgumentPtr() {
@@ -37,31 +33,6 @@ function getUint32Memory() {
         cachegetUint32Memory = new Uint32Array(wasm.memory.buffer);
     }
     return cachegetUint32Memory;
-}
-
-let cachedTextEncoder = new TextEncoder('utf-8');
-
-function passStringToWasm(arg) {
-
-    const buf = cachedTextEncoder.encode(arg);
-    const ptr = wasm.__wbindgen_malloc(buf.length);
-    getUint8Memory().set(buf, ptr);
-    return [ptr, buf.length];
-}
-/**
-* @param {string} arg0
-* @returns {void}
-*/
-export function greet(arg0) {
-    const [ptr0, len0] = passStringToWasm(arg0);
-    try {
-        return wasm.greet(ptr0, len0);
-
-    } finally {
-        wasm.__wbindgen_free(ptr0, len0 * 1);
-
-    }
-
 }
 
 function freeUniverse(ptr) {
@@ -104,6 +75,12 @@ export class Universe {
         return wasm.universe_cells(this.ptr);
     }
     /**
+    * @returns {void}
+    */
+    reset() {
+        return wasm.universe_reset(this.ptr);
+    }
+    /**
     * @returns {Universe}
     */
     static create() {
@@ -127,14 +104,34 @@ export class Universe {
     /**
     * @returns {void}
     */
-    tick() {
-        return wasm.universe_tick(this.ptr);
+    stop() {
+        return wasm.universe_stop(this.ptr);
     }
     /**
     * @returns {void}
     */
-    tick2() {
-        return wasm.universe_tick2(this.ptr);
+    generate_pattern() {
+        return wasm.universe_generate_pattern(this.ptr);
+    }
+    /**
+    * @returns {void}
+    */
+    toggle_start_stop() {
+        return wasm.universe_toggle_start_stop(this.ptr);
+    }
+    /**
+    * @param {number} arg0
+    * @param {number} arg1
+    * @returns {void}
+    */
+    toggle_cell(arg0, arg1) {
+        return wasm.universe_toggle_cell(this.ptr, arg0, arg1);
+    }
+    /**
+    * @returns {void}
+    */
+    tick() {
+        return wasm.universe_tick(this.ptr);
     }
 }
 

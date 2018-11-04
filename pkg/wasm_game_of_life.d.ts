@@ -1,7 +1,5 @@
 /* tslint:disable */
 export enum Cell {Dead,Alive,}
-export function greet(arg0: string): void;
-
 export class Universe {
 free(): void;
 
@@ -11,12 +9,20 @@ free(): void;
 
  cells(): number;
 
+ reset(): void;
+
 static  create(): Universe;
 
  render(): string;
 
- tick(): void;
+ stop(): void;
 
- tick2(): void;
+ generate_pattern(): void;
+
+ toggle_start_stop(): void;
+
+ toggle_cell(arg0: number, arg1: number): void;
+
+ tick(): void;
 
 }

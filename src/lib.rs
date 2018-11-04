@@ -30,6 +30,7 @@ pub enum Cell {
 }
 #[wasm_bindgen]
 pub struct Universe {
+    run: bool,
     width: u32,
     height: u32,
     cells: Vec<Cell>,
@@ -52,6 +53,7 @@ impl Universe {
         Universe {
             width: w,
             height: h,
+            run: false,
             cells: vec![Cell::Dead; (w * h) as usize],
         }
     }
@@ -66,10 +68,38 @@ impl Universe {
     pub fn cells(&self) -> *const Cell {
         self.cells.as_ptr()
     }
+    pub fn reset(&mut self) {
+        self.cells = (0..self.width * self.height).map(|_i| Cell::Dead).collect();
+        self.run = false;
+    }
     pub fn create() -> Universe {
         let width = 64;
         let height = 64;
-        let cells = (0..width * height)
+        // let cells = (0..width * height)
+        //     .map(|i| {
+        //         if i % 2 == 0 || i % 7 == 0 {
+        //             Cell::Alive
+        //         } else {
+        //             Cell::Dead
+        //         }
+        //     }).collect();
+        let cells = (0..width * height).map(|_i| Cell::Dead).collect();
+        Universe {
+            width,
+            height,
+            run: false,
+            cells,
+        }
+    }
+    pub fn render(&self) -> String {
+        self.to_string()
+    }
+    pub fn stop(&mut self) {
+        self.run = false;
+    }
+    pub fn generate_pattern(&mut self) {
+        self.stop();
+        self.cells = (0..self.width * self.height)
             .map(|i| {
                 if i % 2 == 0 || i % 7 == 0 {
                     Cell::Alive
@@ -77,14 +107,17 @@ impl Universe {
                     Cell::Dead
                 }
             }).collect();
-        Universe {
-            width,
-            height,
-            cells,
-        }
     }
-    pub fn render(&self) -> String {
-        self.to_string()
+    pub fn toggle_start_stop(&mut self) {
+        self.run = !self.run;
+    }
+    pub fn toggle_cell(&mut self, row: u32, column: u32) {
+        let idx = self.get_index(row, column);
+        self.cells[idx] = if self.cells[idx] == Cell::Alive {
+            Cell::Dead
+        } else {
+            Cell::Alive
+        }
     }
     fn set(&mut self, row: u32, column: u32, value: Cell) -> Result<(), String> {
         if row > self.height - 1 || column > self.width - 1 {
@@ -115,60 +148,26 @@ impl Universe {
         count
     }
     pub fn tick(&mut self) {
-        let mut next = self.cells.clone();
-        for r in 0..self.height {
-            for c in 0..self.width {
-                let idx = self.get_index(r, c);
-                let new_cell = match (self.cells[idx], self.live_neighbor_count(r, c)) {
-                    (Cell::Alive, i) if i < 2 => Cell::Dead,
-                    (Cell::Alive, i) if i >= 2 && i <= 3 => Cell::Alive,
-                    (Cell::Alive, i) if i > 3 => Cell::Dead,
-                    (Cell::Dead, i) if i == 3 => Cell::Alive,
-                    (other, _) => other,
-                };
-                next[idx] = new_cell;
+        if self.run {
+            let mut next = self.cells.clone();
+            for r in 0..self.height {
+                for c in 0..self.width {
+                    let idx = self.get_index(r, c);
+                    let new_cell = match (self.cells[idx], self.live_neighbor_count(r, c)) {
+                        (Cell::Alive, i) if i < 2 => Cell::Dead,
+                        (Cell::Alive, i) if i >= 2 && i <= 3 => Cell::Alive,
+                        (Cell::Alive, i) if i > 3 => Cell::Dead,
+                        (Cell::Dead, i) if i == 3 => Cell::Alive,
+                        (other, _) => other,
+                    };
+                    next[idx] = new_cell;
+                }
             }
+            self.cells = next;
         }
-        self.cells = next;
-    }
-    pub fn tick2(&mut self) {
-        let mut next = self.cells.clone();
-
-        for row in 0..self.height {
-            for col in 0..self.width {
-                let idx = self.get_index(row, col);
-                let cell = self.cells[idx];
-                let live_neighbors = self.live_neighbor_count(row, col);
-
-                let next_cell = match (cell, live_neighbors) {
-                    // Rule 1: Any live cell with fewer than two live neighbours
-                    // dies, as if caused by underpopulation.
-                    (Cell::Alive, x) if x < 2 => Cell::Dead,
-                    // Rule 2: Any live cell with two or three live neighbours
-                    // lives on to the next generation.
-                    (Cell::Alive, 2) | (Cell::Alive, 3) => Cell::Alive,
-                    // Rule 3: Any live cell with more than three live
-                    // neighbours dies, as if by overpopulation.
-                    (Cell::Alive, x) if x > 3 => Cell::Dead,
-                    // Rule 4: Any dead cell with exactly three live neighbours
-                    // becomes a live cell, as if by reproduction.
-                    (Cell::Dead, 3) => Cell::Alive,
-                    // All other cells remain in the same state.
-                    (otherwise, _) => otherwise,
-                };
-
-                next[idx] = next_cell;
-            }
-        }
-
-        self.cells = next;
     }
 }
 
-#[wasm_bindgen]
-pub fn greet(name: &str) {
-    alert(format!("Hello, wasm-game-of-life! {}", name).as_str());
-}
 #[cfg(test)]
 mod tests {
     use super::*;
